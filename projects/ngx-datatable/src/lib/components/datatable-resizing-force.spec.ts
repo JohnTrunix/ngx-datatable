@@ -109,22 +109,19 @@ describe('Datatable resizing: force strategy', () => {
   });
 
   it('deducts a nonzero vertical scrollbar width without bleeding into horizontal overflow', async () => {
-    // Headless Chromium can use overlay scrollbars. Control the measurement,
-    // not the ResizeObserver or layout, to exercise this branch on all platforms.
     TestBed.configureTestingModule({
       providers: [{ provide: ScrollbarHelper, useValue: { width: 15 } }]
     });
     const table = await ResizingTable.create('force', equalColumns(), {
       scrollbarH: true,
-      scrollbarV: true
+      scrollbarV: true,
+      scrollbarWidth: 15
     });
     table.rows.set(resizeRows(30));
     await expect
       .poll(() => table.grid.element().scrollHeight > table.grid.element().clientHeight)
       .toBe(true);
-    // BUG: scrollbar visibility alone does not trigger redistribution. Skip
-    // A/B/C/D === 96.25 immediately after adding rows, without a width change.
-    // await table.widths({ A: 96.25, B: 96.25, C: 96.25, D: 96.25 });
+    await table.widths({ A: 96.25, B: 96.25, C: 96.25, D: 96.25 });
     await table.setWidth(420);
     await table.widths({ A: 101.25, B: 101.25, C: 101.25, D: 101.25 });
     await table.setWidth(405);
@@ -133,10 +130,9 @@ describe('Datatable resizing: force strategy', () => {
     await expect
       .poll(() => table.grid.element().scrollHeight > table.grid.element().clientHeight)
       .toBe(false);
-    // BUG: removing the vertical scrollbar alone does not trigger redistribution.
-    // await table.widths({ A: 101.25, B: 101.25, C: 101.25, D: 101.25 });
-    await table.setWidth(400);
-    await table.widths({ A: 100, B: 100, C: 100, D: 100 });
+    await table.widths({ A: 101.25, B: 101.25, C: 101.25, D: 101.25 });
+    await table.setWidth(420);
+    await table.widths({ A: 105, B: 105, C: 105, D: 105 });
   });
 
   it('keeps pinned groups aligned and redistributes following columns in rendered order', async () => {

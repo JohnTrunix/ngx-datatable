@@ -1,6 +1,6 @@
 import { inputBinding, outputBinding, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { expect, vi } from 'vitest';
+import { expect, onTestFinished, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { ColumnMode, ColumnResizeEvent } from '../../types/public.types';
@@ -11,6 +11,8 @@ interface ResizeOptions {
   width?: number;
   scrollbarH?: boolean;
   scrollbarV?: boolean;
+  /** Forces classic scrollbars of this width, as headless Chromium uses overlay scrollbars. */
+  scrollbarWidth?: number;
 }
 
 /** Full-table fixture shared by the strategy integration specs. */
@@ -54,6 +56,12 @@ export class ResizingTable {
     // Keep the fixture and drag targets inside the viewport. Otherwise the
     // browser can scroll during real mouse input and invalidate drag coordinates.
     await page.viewport(1200, 800);
+    if (options.scrollbarWidth !== undefined) {
+      const style = document.createElement('style');
+      style.textContent = `.datatable-grid::-webkit-scrollbar { width: ${options.scrollbarWidth}px; }`;
+      document.head.append(style);
+      onTestFinished(() => style.remove());
+    }
     const table = new ResizingTable(mode, columns, options);
     await table.fixture.whenStable();
     await expect
@@ -99,7 +107,11 @@ export class ResizingTable {
 
   async setWidth(width: number) {
     this.host.style.width = `${width}px`;
-    await expect.poll(() => this.fixture.componentInstance.tableWidth()).toBe(width);
+    // The table width is the width available to the content, excluding a vertical scrollbar.
+    await expect
+      .poll(() => this.fixture.componentInstance.tableWidth())
+      .toBe(this.grid.element().clientWidth);
+    await expect.poll(() => this.host.getBoundingClientRect().width).toBe(width);
     await this.fixture.whenStable();
   }
 

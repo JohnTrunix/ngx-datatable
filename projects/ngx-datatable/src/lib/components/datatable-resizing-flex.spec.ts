@@ -172,7 +172,7 @@ describe('Datatable resizing: flex strategy', () => {
         { prop: 'B', width: 200, flexGrow: 2, minWidth: 200 },
         { prop: 'C', width: 200, flexGrow: 2, minWidth: 200 }
       ],
-      { width: 600, scrollbarH: true, scrollbarV: true }
+      { width: 600, scrollbarH: true, scrollbarV: true, scrollbarWidth: 15 }
     );
     await table.drag('A', 40);
     const pinnedWidth = table.header('A').element().getBoundingClientRect().width;
@@ -192,8 +192,7 @@ describe('Datatable resizing: flex strategy', () => {
     await expect
       .poll(() => table.grid.element().scrollHeight > table.grid.element().clientHeight)
       .toBe(false);
-    // BUG: scrollbar visibility alone does not trigger redistribution.
-    // await table.widths({ A: 140, B: 224, C: 224, D: 112 });
+    await table.widths({ A: 140, B: 224, C: 224, D: 112 });
     await table.setWidth(720);
     await table.widths({
       A: pinnedWidth,

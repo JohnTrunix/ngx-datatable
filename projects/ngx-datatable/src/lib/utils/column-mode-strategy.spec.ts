@@ -67,6 +67,22 @@ describe('Column mode strategies', () => {
         expect(columns[2].width()).toBe(320);
       });
     });
+
+    describe('when table shrinks', () => {
+      it('should take the delta of columns clamped to their min width from the remaining columns', () => {
+        const columns = toInternalColumn([
+          { prop: 'id', width: 300, minWidth: 250 },
+          { prop: 'name', width: 300 },
+          { prop: 'email', width: 300 }
+        ]);
+
+        strategy.recalculate(context(columns, 600));
+
+        expect(columns[0].width()).toBe(250);
+        expect(columns[1].width()).toBe(175);
+        expect(columns[2].width()).toBe(175);
+      });
+    });
   });
 
   describe('FlexColumnModeStrategy', () => {

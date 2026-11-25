@@ -19,6 +19,13 @@ export class ScrollContainerDirective {
     return this.element.scrollTop;
   }
 
+  /** Width available to the content, excluding a visible vertical scrollbar. */
+  get contentWidth(): number {
+    // `clientWidth` is rounded, so subtract the scrollbar from the fractional width instead.
+    const { offsetWidth, clientWidth } = this.element;
+    return this.element.getBoundingClientRect().width - (offsetWidth - clientWidth);
+  }
+
   /** Whether the container's content overflows it vertically. */
   get verticalScrollVisible(): boolean {
     return this.element.scrollHeight > this.element.clientHeight;
@@ -36,5 +43,15 @@ export class ScrollContainerDirective {
   listenToScroll(listener: (event: Event) => void): () => void {
     this.element.addEventListener('scroll', listener, { passive: true });
     return () => this.element.removeEventListener('scroll', listener);
+  }
+
+  /**
+   * Subscribes to size changes of the container, including the vertical scrollbar
+   * appearing or disappearing, returning a function that unsubscribes.
+   */
+  listenToResize(listener: () => void): () => void {
+    const resizeObserver = new ResizeObserver(listener);
+    resizeObserver.observe(this.element);
+    return () => resizeObserver.disconnect();
   }
 }
